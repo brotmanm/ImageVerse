@@ -7,8 +7,13 @@
 //
 
 #import "AppDelegate.h"
+#import <AudioToolbox/AudioServices.h>
+#import <AVFoundation/AVFoundation.h>
 
-@interface AppDelegate ()
+@interface AppDelegate () <AVAudioPlayerDelegate>
+
+@property BOOL playingMusic;
+@property AVAudioPlayer * music;
 
 @end
 
@@ -16,7 +21,26 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    // Override point for customization after application launch.
+    
+    [application setStatusBarHidden:YES];
+    
+    NSString *musicPath = [[NSBundle mainBundle] pathForResource:@"ambientspace" ofType:@"mp3"];
+    _music = [[AVAudioPlayer alloc] initWithContentsOfURL:[NSURL fileURLWithPath:musicPath] error:nil];
+    _music.delegate = self;
+    _music.numberOfLoops = INFINITY;
+    _music.volume = 1;
+    
+    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+    BOOL muteMusic = [defaults boolForKey:@"muteMusic"];
+    if (!muteMusic) {
+        [_music play];
+        _playingMusic = YES;
+    } else {
+        _playingMusic = NO;
+    }
+    
+    _oldestIndex = [defaults integerForKey:@"oldestIndex"];
+    
     return YES;
 }
 
@@ -30,6 +54,10 @@
 - (void)applicationDidEnterBackground:(UIApplication *)application {
     // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
     // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
+    NSUserDefaults * defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:!_playingMusic forKey:@"muteMusic"];
+    [defaults setInteger:_oldestIndex forKey:@"oldestIndex"];
+    [defaults synchronize];
 }
 
 
@@ -47,5 +75,16 @@
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
 }
 
+- (BOOL)toggleSound {
+    if (_playingMusic) {
+        _playingMusic = NO;
+        [_music pause];
+    } else {
+        _playingMusic = YES;
+        [_music play];
+    }
+    
+    return _playingMusic;
+}
 
 @end

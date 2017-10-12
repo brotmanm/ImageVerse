@@ -12,6 +12,10 @@
 
 @property (strong, nonatomic) UIWindow *window;
 
+- (BOOL)toggleSound;
+@property NSInteger oldestIndex;
+
+
 
 @end
 
